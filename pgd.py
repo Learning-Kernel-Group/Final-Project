@@ -58,8 +58,8 @@ def _inverse_part(quad_ker, lamb):
 
 
 def _weighting_kernels(base_kernels, mu, p):
-    for i in range(p):
-        base_kernels[i, :, :] = mu[i] * base_kernels[i, :, :]
+    for k in range(p):
+        base_kernels[k, :, :] = mu[k] * base_kernels[k, :, :]
     return base_kernels
 
 

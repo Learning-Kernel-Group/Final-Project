@@ -5,14 +5,14 @@ import pgd as descent
 def hypothesis(training_features, testing_features, subsampling):
     training_features = training_features[::subsampling, :]
     base_kernel_results = []
-    for k in range(training_features.shape[1]):
+    _, p = training_features.shape
+    for k in range(p):
         training_vec = training_features[:, k]
         testing_vec = testing_features[:, k]
         kernel_hypothesis = (training_vec.reshape(
             (-1, 1))).dot(testing_vec.reshape((1, -1)))
         base_kernel_results.append(kernel_hypothesis)
-    base_kernel_results = np.array(base_kernel_results)
-    return base_kernel_results
+    return np.array(base_kernel_results)
 
 
 # def _apply_base_kernel(vec1, vec2, i):
