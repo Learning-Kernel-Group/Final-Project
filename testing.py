@@ -1,5 +1,6 @@
 import numpy as np
 import pgd as descent
+from sklearn.model_selection import RepeatedKFold
 
 
 def hypothesis(training_features, testing_features, subsampling):
@@ -39,6 +40,35 @@ def error_rate(predicts, labels):
     return min(error_rate_1, error_rate_2) / labels.shape[0]
 
 
+def cross_validation(features, labels, folds, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
+    rkf = RepeatedKFold(n_splits=folds, n_repeats=1)
+    error_arr = []
+    for train_index, test_index in rkf.split(features):
+        features_train, features_test = features[
+            train_index], features[test_index]
+        labels_train, labels_test = labels[train_index], labels[test_index]
+        training_result, quad_ker = descent.pgd(
+            features_train, labels_train, lamb, eta, norm_bound, tolerence, mu_0, subsampling)
+        base_kernel_results = hypothesis(
+            features_train, features_test, subsampling)
+        predicts = predict(features_train, labels_train, training_result,
+                           quad_ker, lamb, base_kernel_results, features_test, subsampling)
+        error = error_rate(predicts, labels_test)
+        error_arr.append(error)
+    return np.array(error_arr)
+
+
+def testing(features, labels, testing_features, testing_labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
+    n, p = features.shape
+    training_result, quad_ker = descent.pgd(
+        features, labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling)
+    base_kernel_results = hypothesis(features, testing_features, subsampling)
+    predicts = predict(features, labels, training_result,
+                       quad_ker, lamb, base_kernel_results, testing_features, subsampling)
+    error = error_rate(predicts, testing_labels)
+    return error
+
+
 if __name__ == '__main__':
     # features = np.load(
     #     './Data Sets/regression-datasets-kin8nm_features_train.npy')
@@ -48,42 +78,35 @@ if __name__ == '__main__':
     # testing_labels = np.load(
     #     './Data Sets/regression-datasets-kin8nm_labels_test.npy')
     # n, p = features.shape
-    # training_result, quad_ker = descent.pgd(
-    #     features, labels, 10, 1, 1, 0.01, np.zeros(p), 10)
-    # base_kernel_results = hypothesis(features, testing_features, 10)
-    # predicts = predict(features, labels, training_result,
-    #                    quad_ker, 10, base_kernel_results, testing_features, 10)
-    # error = error_rate(predicts, testing_labels)
+    # error = testing(features, labels, testing_features, testing_labels, 10, 1, 1, 0.01, np.zeros(p), 10)
+    # error_arr = cross_validation(features, labels, 10, 10, 1, 1, 0.01, np.zeros(p), 10)
     # print(error)
-
-    # features = np.load(
-    #     './Data Sets/UCI Data Sets/ionosphere_features_train.npy')
-    # labels = np.load('./Data Sets/UCI Data Sets/ionosphere_labels_train.npy')
-    # testing_features = np.load(
-    #     './Data Sets/UCI Data Sets/ionosphere_features_test.npy')
-    # testing_labels = np.load(
-    #     './Data Sets/UCI Data Sets/ionosphere_labels_test.npy')
-    # n, p = features.shape
-    # training_result, quad_ker = descent.pgd(
-    #     features, labels, 10, 1, 1, 0.01, np.zeros(p), 1)
-    # base_kernel_results = hypothesis(features, testing_features, 1)
-    # predicts = predict(features, labels, training_result,
-    #                    quad_ker, 10, base_kernel_results, testing_features, 1)
-    # error = error_rate(predicts, testing_labels)
-    # print(error)
+    # print(error_arr)
 
     features = np.load(
-        './Data Sets/UCI Data Sets/sonar_features_train.npy')
-    labels = np.load('./Data Sets/UCI Data Sets/sonar_labels_train.npy')
+        './Data Sets/UCI Data Sets/ionosphere_features_train.npy')
+    labels = np.load('./Data Sets/UCI Data Sets/ionosphere_labels_train.npy')
     testing_features = np.load(
-        './Data Sets/UCI Data Sets/sonar_features_test.npy')
+        './Data Sets/UCI Data Sets/ionosphere_features_test.npy')
     testing_labels = np.load(
-        './Data Sets/UCI Data Sets/sonar_labels_test.npy')
+        './Data Sets/UCI Data Sets/ionosphere_labels_test.npy')
     n, p = features.shape
-    training_result, quad_ker = descent.pgd(
-        features, labels, 10, 1, 1, 0.01, np.zeros(p), 1)
-    base_kernel_results = hypothesis(features, testing_features, 1)
-    predicts = predict(features, labels, training_result,
-                       quad_ker, 10, base_kernel_results, testing_features, 1)
-    error = error_rate(predicts, testing_labels)
+    error = testing(features, labels, testing_features,
+                    testing_labels, 10, 1, 1, 0.01, np.zeros(p), 1)
+    error_arr = cross_validation(
+        features, labels, 10, 10, 1, 1, 0.01, np.zeros(p), 10)
     print(error)
+    print(error_arr)
+
+    # features = np.load(
+    #     './Data Sets/UCI Data Sets/sonar_features_train.npy')
+    # labels = np.load('./Data Sets/UCI Data Sets/sonar_labels_train.npy')
+    # testing_features = np.load(
+    #     './Data Sets/UCI Data Sets/sonar_features_test.npy')
+    # testing_labels = np.load(
+    #     './Data Sets/UCI Data Sets/sonar_labels_test.npy')
+    # n, p = features.shape
+    # error = testing(features, labels, testing_features, testing_labels, 10, 1, 1, 0.01, np.zeros(p), 1)
+    # error_arr = cross_validation(features, labels, 10, 10, 1, 1, 0.01, np.zeros(p), 10)
+    # print(error)
+    # print(error_arr)
