@@ -40,15 +40,48 @@ def error_rate(predicts, labels):
 
 
 if __name__ == '__main__':
+    # features = np.load(
+    #     './Data Sets/regression-datasets-kin8nm_features_train.npy')
+    # labels = np.load('./Data Sets/regression-datasets-kin8nm_labels_train.npy')
+    # testing_features = np.load(
+    #     './Data Sets/regression-datasets-kin8nm_features_test.npy')
+    # testing_labels = np.load(
+    #     './Data Sets/regression-datasets-kin8nm_labels_test.npy')
+    # n, p = features.shape
+    # training_result, quad_ker = descent.pgd(
+    #     features, labels, 10, 1, 1, 0.01, np.zeros(p), 10)
+    # base_kernel_results = hypothesis(features, testing_features, 10)
+    # predicts = predict(features, labels, training_result,
+    #                    quad_ker, 10, base_kernel_results, testing_features, 10)
+    # error = error_rate(predicts, testing_labels)
+    # print(error)
+
+    # features = np.load(
+    #     './Data Sets/UCI Data Sets/ionosphere_features_train.npy')
+    # labels = np.load('./Data Sets/UCI Data Sets/ionosphere_labels_train.npy')
+    # testing_features = np.load(
+    #     './Data Sets/UCI Data Sets/ionosphere_features_test.npy')
+    # testing_labels = np.load(
+    #     './Data Sets/UCI Data Sets/ionosphere_labels_test.npy')
+    # n, p = features.shape
+    # training_result, quad_ker = descent.pgd(
+    #     features, labels, 10, 1, 1, 0.01, np.zeros(p), 1)
+    # base_kernel_results = hypothesis(features, testing_features, 1)
+    # predicts = predict(features, labels, training_result,
+    #                    quad_ker, 10, base_kernel_results, testing_features, 1)
+    # error = error_rate(predicts, testing_labels)
+    # print(error)
+
     features = np.load(
-        './Data Sets/regression-datasets-kin8nm_features_train.npy')
-    labels = np.load('./Data Sets/regression-datasets-kin8nm_labels_train.npy')
+        './Data Sets/UCI Data Sets/sonar_features_train.npy')
+    labels = np.load('./Data Sets/UCI Data Sets/sonar_labels_train.npy')
     testing_features = np.load(
-        './Data Sets/regression-datasets-kin8nm_features_test.npy')
+        './Data Sets/UCI Data Sets/sonar_features_test.npy')
     testing_labels = np.load(
-        './Data Sets/regression-datasets-kin8nm_labels_test.npy')
+        './Data Sets/UCI Data Sets/sonar_labels_test.npy')
+    n, p = features.shape
     training_result, quad_ker = descent.pgd(
-        features, labels, 10, 1, 1, 0.01, np.zeros(8), 1)
+        features, labels, 10, 1, 1, 0.01, np.zeros(p), 1)
     base_kernel_results = hypothesis(features, testing_features, 1)
     predicts = predict(features, labels, training_result,
                        quad_ker, 10, base_kernel_results, testing_features, 1)

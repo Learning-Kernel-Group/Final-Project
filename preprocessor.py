@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+from sklearn import preprocessing
 
 
 def preprocessor_data(filename):
@@ -18,8 +19,23 @@ def preprocessor_data(filename):
             else:
                 labels[i] = -1
         labels = labels.astype(np.float)
-        np.save('Data Sets/UCI Data Sets/' + filename + '_features', features)
-        np.save('Data Sets/UCI Data Sets/' + filename + '_labels', labels)
+        n, p = features.shape
+        training_features = features[:int(n / 2), :]
+        testing_features = features[int(n / 2):, :]
+        training_labels = labels[:int(n / 2)]
+        testing_labels = labels[int(n / 2):]
+        scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
+        scaler.fit_transform(training_features)
+        training_features = scaler.transform(training_features)
+        testing_features = scaler.transform(testing_features)
+        np.save('Data Sets/UCI Data Sets/' + filename +
+                '_features_train', training_features)
+        np.save('Data Sets/UCI Data Sets/' + filename +
+                '_features_test', testing_features)
+        np.save('Data Sets/UCI Data Sets/' + filename +
+                '_labels_train', training_labels)
+        np.save('Data Sets/UCI Data Sets/' + filename +
+                '_labels_test', testing_labels)
 
 
 def preprocessor_csv(filename):
@@ -37,9 +53,13 @@ def preprocessor_csv(filename):
             else:
                 labels[i] = -1
         training_features = features[:4096, :]
-        testing_features = features[4096: , :]
+        testing_features = features[4096:, :]
         training_labels = labels[:4096]
         testing_labels = labels[4096:]
+        scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
+        scaler.fit_transform(training_features)
+        training_features = scaler.transform(training_features)
+        testing_features = scaler.transform(testing_features)
         np.save('Data Sets/' + filename + '_features_train', training_features)
         np.save('Data Sets/' + filename + '_features_test', testing_features)
         np.save('Data Sets/' + filename + '_labels_train', training_labels)
@@ -47,6 +67,6 @@ def preprocessor_csv(filename):
 
 
 if __name__ == '__main__':
-    # preprocessor_data('ionosphere')
-    # preprocessor_data('sonar')
+    preprocessor_data('ionosphere')
+    preprocessor_data('sonar')
     preprocessor_csv('regression-datasets-kin8nm')
