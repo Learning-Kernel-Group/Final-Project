@@ -45,7 +45,7 @@ def _partial_derivatives(quad_ker, sum_ker, base_kernels, lamb, labels, p):
     derivatives = []
     for k in range(p):
         center = sum_ker * base_kernels[k]
-        print('Inversing matrix...')
+        print('Inverting matrix...')
         inverse = _inverse_part(quad_ker, lamb)
         edge_part = inverse.dot(labels)
         derivatives.append(-2 * ((edge_part.T).dot(center)).dot(edge_part))

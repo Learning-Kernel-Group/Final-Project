@@ -52,10 +52,11 @@ def preprocessor_csv(filename):
                 labels[i] = 1
             else:
                 labels[i] = -1
-        training_features = features[:4096, :]
-        testing_features = features[4096:, :]
-        training_labels = labels[:4096]
-        testing_labels = labels[4096:]
+        n, p = features.shape
+        training_features = features[:int(n / 2), :]
+        testing_features = features[int(n / 2):, :]
+        training_labels = labels[:int(n / 2)]
+        testing_labels = labels[int(n / 2):]
         scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
         scaler.fit_transform(training_features)
         training_features = scaler.transform(training_features)
