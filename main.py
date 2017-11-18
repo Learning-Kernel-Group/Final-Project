@@ -2,6 +2,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 import train_test as tes
 import plot
+from matplotlib import rc
+# rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+rc('text', usetex=True)
 
 
 class Problem():
@@ -71,11 +74,19 @@ class Problem():
         self.error_array = np.array(self.error_array)
 
     def plotting(self):
+        plt.style.use('ggplot')
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif')
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        plot.plot_as_seq(self.error_array, self.lamb_range, ax)
-        plot.plot_as_errorbar(self.error_arr_array, self.lamb_range, ax)
-        plt.savefig('figure.png', dpi=200)
+        plot.plot_as_seq(self.error_array, self.lamb_range, 'Test Error', ax)
+        plot.plot_as_errorbar(self.error_arr_array,
+                              self.lamb_range, 'Cross Validation Error', ax)
+        ax.set_title(r"Data Set--" + self.dataset_name)
+        ax.set_xlabel(r"$\lambda$")
+        ax.set_ylabel(r"Error rate")
+        plt.legend()
+        plt.savefig('figure-' + self.dataset_name + '.png', dpi=250)
 
 
 if __name__ == '__main__':
@@ -102,7 +113,8 @@ if __name__ == '__main__':
     # plot.plot_as_errorbar(error_arr_array, lamb_range, ax)
     # plt.savefig('figure.png', dpi=200)
 
-    lamb_range = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 50, 100]
+    lamb_range = [1, 2, 4, 6, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    # lamb_range = [1, 10, 100]
     problem = Problem('ionosphere', 'pgd', 10, lamb_range, 1, 1, 0.01, 1)
     problem.cross_validation()
     problem.train_test()

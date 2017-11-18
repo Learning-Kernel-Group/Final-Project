@@ -2,15 +2,14 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
-def plot_as_seq(arr, xaxis, ax):
-    n = arr.shape[0]
-    ax.plot(xaxis, arr, marker='D')
+def plot_as_seq(arr, xaxis, label, ax):
+    ax.plot(xaxis, arr, marker='D', label=label)
 
 
-def plot_as_errorbar(trails, xaxis, ax):
+def plot_as_errorbar(trails, xaxis, label, ax):
     mean = np.mean(trails, axis=1)
     deviation = np.std(trails, axis=1)
-    ax.errorbar(xaxis, mean, yerr=deviation, fmt='-.D')
+    ax.errorbar(xaxis, mean, yerr=deviation, fmt='-.D', label=label)
 
 
 if __name__ == '__main__':
