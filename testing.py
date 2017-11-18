@@ -94,7 +94,7 @@ if __name__ == '__main__':
     error = testing(features, labels, testing_features,
                     testing_labels, 10, 1, 1, 0.01, np.zeros(p), 1)
     error_arr = cross_validation(
-        features, labels, 10, 10, 1, 1, 0.01, np.zeros(p), 10)
+        features, labels, 10, 10, 1, 1, 0.01, np.zeros(p), 1)
     print(error)
     print(error_arr)
 
