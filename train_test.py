@@ -40,15 +40,15 @@ def error_rate(predicts, labels):
     return min(error_rate_1, error_rate_2) / labels.shape[0]
 
 
-def cross_validation(features, labels, folds, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
+def cross_validation(features, labels, folds, method, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
     rkf = RepeatedKFold(n_splits=folds, n_repeats=1)
     error_arr = []
     for train_index, test_index in rkf.split(features):
         features_train, features_test = features[
             train_index], features[test_index]
         labels_train, labels_test = labels[train_index], labels[test_index]
-        training_result, quad_ker = descent.pgd(
-            features_train, labels_train, lamb, eta, norm_bound, tolerence, mu_0, subsampling)
+        training_result, quad_ker = training(
+            features_train, labels_train, lamb, eta, norm_bound, tolerence, mu_0, subsampling, method)
         base_kernel_results = hypothesis(
             features_train, features_test, subsampling)
         predicts = predict(features_train, labels_train, training_result,
@@ -58,10 +58,14 @@ def cross_validation(features, labels, folds, lamb, eta, norm_bound, tolerence, 
     return np.array(error_arr)
 
 
-def testing(features, labels, testing_features, testing_labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
+def training(features, labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling, method='pgd'):
+    if method == 'pgd':
+        training_result, quad_ker = descent.pgd(
+            features, labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling)
+        return training_result, quad_ker
+
+def testing(training_result, quad_ker, features, labels, testing_features, testing_labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
     n, p = features.shape
-    training_result, quad_ker = descent.pgd(
-        features, labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling)
     base_kernel_results = hypothesis(features, testing_features, subsampling)
     predicts = predict(features, labels, training_result,
                        quad_ker, lamb, base_kernel_results, testing_features, subsampling)
@@ -78,7 +82,9 @@ if __name__ == '__main__':
     # testing_labels = np.load(
     #     './Data Sets/regression-datasets-kin8nm_labels_test.npy')
     # n, p = features.shape
-    # error = testing(features, labels, testing_features, testing_labels, 10, 1, 1, 0.01, np.zeros(p), 10)
+    # training_result, quad_ker = training(features, labels, 10, 1, 1, 0.01, np.zeros(p), 10, method='pgd')
+    # error = testing(training_result, quad_ker, features, labels, testing_features,
+    #                 testing_labels, 10, 1, 1, 0.01, np.zeros(p), 10)
     # error_arr = cross_validation(features, labels, 10, 10, 1, 1, 0.01, np.zeros(p), 10)
     # print(error)
     # print(error_arr)
@@ -91,7 +97,8 @@ if __name__ == '__main__':
     testing_labels = np.load(
         './Data Sets/UCI Data Sets/ionosphere_labels_test.npy')
     n, p = features.shape
-    error = testing(features, labels, testing_features,
+    training_result, quad_ker = training(features, labels, 10, 1, 1, 0.01, np.zeros(p), 1, method='pgd')
+    error = testing(training_result, quad_ker, features, labels, testing_features,
                     testing_labels, 10, 1, 1, 0.01, np.zeros(p), 1)
     error_arr = cross_validation(
         features, labels, 10, 10, 1, 1, 0.01, np.zeros(p), 1)
@@ -106,7 +113,9 @@ if __name__ == '__main__':
     # testing_labels = np.load(
     #     './Data Sets/UCI Data Sets/sonar_labels_test.npy')
     # n, p = features.shape
-    # error = testing(features, labels, testing_features, testing_labels, 10, 1, 1, 0.01, np.zeros(p), 1)
+    # training_result, quad_ker = training(features, labels, 10, 1, 1, 0.01, np.zeros(p), 1, method='pgd')
+    # error = testing(training_result, quad_ker, features, labels, testing_features,
+    #                 testing_labels, 10, 1, 1, 0.01, np.zeros(p), 1)
     # error_arr = cross_validation(features, labels, 10, 10, 1, 1, 0.01, np.zeros(p), 10)
     # print(error)
-    # print(error_arr)
+    print(error_arr)
