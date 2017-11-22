@@ -40,9 +40,16 @@ def error_rate(predicts, labels):
     return min(error_rate_1, error_rate_2) / labels.shape[0]
 
 
+def mean_squared_error(predicts, labels):
+    n = labels.shape
+    mean_squared_sum = np.sum((predicts - labels) ** 2) / 4
+    return mean_squared_sum / n
+
+
 def cross_validation(features, labels, folds, method, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
     rkf = RepeatedKFold(n_splits=folds, n_repeats=1)
     error_arr = []
+    mse_arr = []
     for train_index, test_index in rkf.split(features):
         features_train, features_test = features[
             train_index], features[test_index]
@@ -54,8 +61,10 @@ def cross_validation(features, labels, folds, method, lamb, eta, norm_bound, tol
         predicts = predict(features_train, labels_train, training_result,
                            quad_ker, lamb, base_kernel_results, features_test, subsampling)
         error = error_rate(predicts, labels_test)
+        mse = mean_squared_error(predicts, labels_test)
         error_arr.append(error)
-    return np.array(error_arr)
+        mse_arr.append(mse)
+    return np.array(error_arr), np.array(mse_arr)
 
 
 def training(features, labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling, method='pgd'):
@@ -64,13 +73,15 @@ def training(features, labels, lamb, eta, norm_bound, tolerence, mu_0, subsampli
             features, labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling)
         return training_result, quad_ker
 
+
 def testing(training_result, quad_ker, features, labels, testing_features, testing_labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
     n, p = features.shape
     base_kernel_results = hypothesis(features, testing_features, subsampling)
     predicts = predict(features, labels, training_result,
                        quad_ker, lamb, base_kernel_results, testing_features, subsampling)
     error = error_rate(predicts, testing_labels)
-    return error
+    mse = mean_squared_error(predicts, testing_labels)
+    return error, mse
 
 
 if __name__ == '__main__':
@@ -97,7 +108,8 @@ if __name__ == '__main__':
     testing_labels = np.load(
         './Data Sets/UCI Data Sets/ionosphere_labels_test.npy')
     n, p = features.shape
-    training_result, quad_ker = training(features, labels, 10, 1, 1, 0.01, np.zeros(p), 1, method='pgd')
+    training_result, quad_ker = training(
+        features, labels, 10, 1, 1, 0.01, np.zeros(p), 1, method='pgd')
     error = testing(training_result, quad_ker, features, labels, testing_features,
                     testing_labels, 10, 1, 1, 0.01, np.zeros(p), 1)
     error_arr = cross_validation(

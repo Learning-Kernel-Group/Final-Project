@@ -19,7 +19,9 @@ class Problem():
         self.tolerence = tolerence
         self.subsampling = subsampling
         self.error_array = []
+        self.mse_array = []
         self.error_arr_array = []
+        self.mse_arr_array = []
         self.training_result = None
         self.quad_ker = None
 
@@ -59,21 +61,25 @@ class Problem():
 
     def cross_validation(self):
         for lamb in self.lamb_range:
-            error_arr = tes.cross_validation(self.features, self.labels, self.folds, self.method_name, lamb,
+            error_arr, mse_arr = tes.cross_validation(self.features, self.labels, self.folds, self.method_name, lamb,
                                              self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
             self.error_arr_array.append(error_arr)
+            self.mse_arr_array.append(mse_arr)
         self.error_arr_array = np.array(self.error_arr_array)
+        self.mse_arr_array = np.array(self.mse_arr_array)
 
     def train_test(self):
         for lamb in self.lamb_range:
             self.training_result, self.quad_ker = tes.training(
                 self.features, self.labels, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling, method=self.method_name)
-            error = tes.testing(self.training_result, self.quad_ker, self.features, self.labels, self.testing_features,
+            error, mse = tes.testing(self.training_result, self.quad_ker, self.features, self.labels, self.testing_features,
                                 self.testing_labels, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
             self.error_array.append(error)
+            self.mse_array.append(mse)
         self.error_array = np.array(self.error_array)
+        self.mse_array = np.array(self.mse_array)
 
-    def plotting(self):
+    def plotting_error(self):
         plt.style.use('ggplot')
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif')
@@ -86,7 +92,23 @@ class Problem():
         ax.set_xlabel(r"$\lambda$")
         ax.set_ylabel(r"Error rate")
         plt.legend()
-        plt.savefig('figure-' + self.dataset_name + '.png', dpi=250)
+        plt.savefig('figure-error-' + self.dataset_name + '.png', dpi=250)
+
+
+    def plotting_mse(self):
+        plt.style.use('ggplot')
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif')
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        plot.plot_as_seq(self.mse_array, self.lamb_range, 'Test MSE', ax)
+        plot.plot_as_errorbar(self.mse_arr_array,
+                              self.lamb_range, 'Cross Validation MSE', ax)
+        ax.set_title(r"Data Set--" + self.dataset_name)
+        ax.set_xlabel(r"$\lambda$")
+        ax.set_ylabel(r"Mean Squared Error")
+        plt.legend()
+        plt.savefig('figure-mse-' + self.dataset_name + '.png', dpi=250)
 
 
 if __name__ == '__main__':
@@ -118,4 +140,5 @@ if __name__ == '__main__':
     problem = Problem('ionosphere', 'pgd', 10, lamb_range, 1, 1, 0.01, 1)
     problem.cross_validation()
     problem.train_test()
-    problem.plotting()
+    problem.plotting_error()
+    problem.plotting_mse()
