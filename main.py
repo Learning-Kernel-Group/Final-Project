@@ -30,15 +30,6 @@ class Problem():
         self.mu_0 = np.zeros(self.p)
 
     def import_data_from(self):
-        if self.dataset_name == 'ionosphere':
-            features = np.load(
-                './Data Sets/UCI Data Sets/ionosphere_features_train.npy')
-            labels = np.load(
-                './Data Sets/UCI Data Sets/ionosphere_labels_train.npy')
-            testing_features = np.load(
-                './Data Sets/UCI Data Sets/ionosphere_features_test.npy')
-            testing_labels = np.load(
-                './Data Sets/UCI Data Sets/ionosphere_labels_test.npy')
         if self.dataset_name == 'kin8nm':
             features = np.load(
                 './Data Sets/regression-datasets-kin8nm_features_train.npy')
@@ -48,15 +39,15 @@ class Problem():
                 './Data Sets/regression-datasets-kin8nm_features_test.npy')
             testing_labels = np.load(
                 './Data Sets/regression-datasets-kin8nm_labels_test.npy')
-        if self.dataset_name == 'sonar':
+        else:
             features = np.load(
-                './Data Sets/UCI Data Sets/sonar_features_train.npy')
+                './Data Sets/UCI Data Sets/' + self.dataset_name + '_features_train.npy')
             labels = np.load(
-                './Data Sets/UCI Data Sets/sonar_labels_train.npy')
+                './Data Sets/UCI Data Sets/' + self.dataset_name + '_labels_train.npy')
             testing_features = np.load(
-                './Data Sets/UCI Data Sets/sonar_features_test.npy')
+                './Data Sets/UCI Data Sets/' + self.dataset_name + '_features_test.npy')
             testing_labels = np.load(
-                './Data Sets/UCI Data Sets/sonar_labels_test.npy')
+                './Data Sets/UCI Data Sets/' + self.dataset_name + '_labels_test.npy')
         return features, labels, testing_features, testing_labels
 
     def cross_validation(self):
@@ -137,7 +128,7 @@ if __name__ == '__main__':
 
     lamb_range = [1, 2, 4, 6, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     # lamb_range = [1, 10, 100]
-    problem = Problem('ionosphere', 'pgd', 10, lamb_range, 1, 1, 0.01, 1)
+    problem = Problem('kin8nm', 'pgd', 10, lamb_range, 1, 1, 0.01, 1)
     problem.cross_validation()
     problem.train_test()
     problem.plotting_error()
