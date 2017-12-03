@@ -6,7 +6,7 @@ def _get_base_kernels(features, subsampling=1):
     return kernel.base_kernel_arr(features, subsampling)
 
 
-def pgd(features, labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
+def pgd(features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
     print('Start running pgd on kernels...')
     n, p = features.shape
     mu = np.zeros(p)
@@ -31,8 +31,8 @@ def pgd(features, labels, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
         print('The weight vector for this round is:\n', mu_prime)
     weighted_kernels = _weighting_kernels(base_kers, mu_prime, p)
     sum_ker = np.sum(weighted_kernels, 0)
-    quad_ker = sum_ker ** 2
-    return mu_prime, quad_ker
+    poly_ker = sum_ker ** degree
+    return mu_prime, poly_ker
 
 
 def _normalization(mu_prime, mu_0, norm_bound):

@@ -9,10 +9,11 @@ rc('text', usetex=True)
 
 class Problem():
 
-    def __init__(self, dataset_name, method_name, folds, lamb_range, eta, norm_bound, tolerence, subsampling):
+    def __init__(self, dataset_name, method_name, degree, folds, lamb_range, eta, norm_bound, tolerence, subsampling):
         self.dataset_name = dataset_name
         self.method_name = method_name
         self.lamb_range = lamb_range
+        self.degree = degree
         self.folds = folds
         self.eta = eta
         self.norm_bound = norm_bound
@@ -23,7 +24,7 @@ class Problem():
         self.error_arr_array = []
         self.mse_arr_array = []
         self.training_result = None
-        self.quad_ker = None
+        self.poly_ker = None
 
         self.features, self.labels, self.testing_features, self.testing_labels = self.import_data_from()
         self.n, self.p = self.features.shape
@@ -61,7 +62,7 @@ class Problem():
 
     def cross_validation(self):
         for lamb in self.lamb_range:
-            error_arr, mse_arr = tes.cross_validation(self.features, self.labels, self.folds, self.method_name, lamb,
+            error_arr, mse_arr = tes.cross_validation(self.features, self.labels, self.folds, self.method_name, self.degree, lamb,
                                                       self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
             self.error_arr_array.append(error_arr)
             self.mse_arr_array.append(mse_arr)
@@ -70,10 +71,10 @@ class Problem():
 
     def train_test(self):
         for lamb in self.lamb_range:
-            self.training_result, self.quad_ker = tes.training(
-                self.features, self.labels, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling, method=self.method_name)
-            error, mse = tes.testing(self.training_result, self.quad_ker, self.features, self.labels, self.testing_features,
-                                     self.testing_labels, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
+            self.training_result, self.poly_ker = tes.training(
+                self.features, self.labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling, method=self.method_name)
+            error, mse = tes.testing(self.training_result, self.poly_ker, self.features, self.labels, self.testing_features,
+                                     self.testing_labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
             self.error_array.append(error)
             self.mse_array.append(mse)
         self.error_array = np.array(self.error_array)
@@ -136,7 +137,7 @@ if __name__ == '__main__':
 
     lamb_range = [1, 2, 4, 6, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     # lamb_range = [1, 10, 100]
-    problem = Problem('supernova', 'pgd', 10, lamb_range, 1, 1, 0.01, 10)
+    problem = Problem('diabetes', 'pgd', 2, 10, lamb_range, 1, 1, 0.01, 1)
     problem.cross_validation()
     problem.train_test()
     problem.plotting_error()
