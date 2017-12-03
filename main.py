@@ -39,6 +39,15 @@ class Problem():
                 './Data Sets/regression-datasets-kin8nm_features_test.npy')
             testing_labels = np.load(
                 './Data Sets/regression-datasets-kin8nm_labels_test.npy')
+        elif self.dataset_name == 'supernova':
+            features = np.load(
+                './Data Sets/' + self.dataset_name + '_features_train.npy')
+            labels = np.load(
+                './Data Sets/' + self.dataset_name + '_labels_train.npy')
+            testing_features = np.load(
+                './Data Sets/' + self.dataset_name + '_features_test.npy')
+            testing_labels = np.load(
+                './Data Sets/' + self.dataset_name + '_labels_test.npy')
         else:
             features = np.load(
                 './Data Sets/UCI Data Sets/' + self.dataset_name + '_features_train.npy')
@@ -127,7 +136,7 @@ if __name__ == '__main__':
 
     lamb_range = [1, 2, 4, 6, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     # lamb_range = [1, 10, 100]
-    problem = Problem('kin8nm', 'pgd', 10, lamb_range, 1, 1, 0.01, 10)
+    problem = Problem('supernova', 'pgd', 10, lamb_range, 1, 1, 0.01, 10)
     problem.cross_validation()
     problem.train_test()
     problem.plotting_error()
