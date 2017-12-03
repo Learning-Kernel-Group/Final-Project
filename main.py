@@ -53,7 +53,7 @@ class Problem():
     def cross_validation(self):
         for lamb in self.lamb_range:
             error_arr, mse_arr = tes.cross_validation(self.features, self.labels, self.folds, self.method_name, lamb,
-                                             self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
+                                                      self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
             self.error_arr_array.append(error_arr)
             self.mse_arr_array.append(mse_arr)
         self.error_arr_array = np.array(self.error_arr_array)
@@ -64,7 +64,7 @@ class Problem():
             self.training_result, self.quad_ker = tes.training(
                 self.features, self.labels, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling, method=self.method_name)
             error, mse = tes.testing(self.training_result, self.quad_ker, self.features, self.labels, self.testing_features,
-                                self.testing_labels, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
+                                     self.testing_labels, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
             self.error_array.append(error)
             self.mse_array.append(mse)
         self.error_array = np.array(self.error_array)
@@ -84,7 +84,6 @@ class Problem():
         ax.set_ylabel(r"Error rate")
         plt.legend()
         plt.savefig('figure-error-' + self.dataset_name + '.png', dpi=250)
-
 
     def plotting_mse(self):
         plt.style.use('ggplot')
@@ -128,7 +127,7 @@ if __name__ == '__main__':
 
     lamb_range = [1, 2, 4, 6, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     # lamb_range = [1, 10, 100]
-    problem = Problem('kin8nm', 'pgd', 10, lamb_range, 1, 1, 0.01, 1)
+    problem = Problem('kin8nm', 'pgd', 10, lamb_range, 1, 1, 0.01, 10)
     problem.cross_validation()
     problem.train_test()
     problem.plotting_error()
