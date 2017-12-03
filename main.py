@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import train_test as tes
 import plot
@@ -89,11 +91,11 @@ class Problem():
         plot.plot_as_seq(self.error_array, self.lamb_range, 'Test Error', ax)
         plot.plot_as_errorbar(self.error_arr_array,
                               self.lamb_range, 'Cross Validation Error', ax)
-        ax.set_title(r"Data Set--" + self.dataset_name)
+        ax.set_title(r"Data Set {} with degree $d = {{{}}}$".format(self.dataset_name, self.degree))
         ax.set_xlabel(r"$\lambda$")
         ax.set_ylabel(r"Error rate")
         plt.legend()
-        plt.savefig('figure-error-' + self.dataset_name + '.png', dpi=250)
+        plt.savefig('figure-error-{}-degree{}.png'.format(self.dataset_name, self.degree), dpi=250)
 
     def plotting_mse(self):
         plt.style.use('ggplot')
@@ -104,11 +106,11 @@ class Problem():
         plot.plot_as_seq(self.mse_array, self.lamb_range, 'Test MSE', ax)
         plot.plot_as_errorbar(self.mse_arr_array,
                               self.lamb_range, 'Cross Validation MSE', ax)
-        ax.set_title(r"Data Set--" + self.dataset_name)
+        ax.set_title(r"Data Set {} with degree $d = {{{}}}$".format(self.dataset_name, self.degree))
         ax.set_xlabel(r"$\lambda$")
         ax.set_ylabel(r"Mean Squared Error")
         plt.legend()
-        plt.savefig('figure-mse-' + self.dataset_name + '.png', dpi=250)
+        plt.savefig('figure-mse-{}-degree{}.png'.format(self.dataset_name, self.degree), dpi=250)
 
 
 if __name__ == '__main__':
@@ -136,9 +138,19 @@ if __name__ == '__main__':
     # plt.savefig('figure.png', dpi=200)
 
     lamb_range = [1, 2, 4, 6, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    data_sets = ['breast-cancer', 'diabetes', 'fourclass', 'german', 'heart', 'sonar', 'kin8nm', 'supernova']
     # lamb_range = [1, 10, 100]
-    problem = Problem('diabetes', 'pgd', 2, 10, lamb_range, 1, 1, 0.01, 1)
-    problem.cross_validation()
-    problem.train_test()
-    problem.plotting_error()
-    problem.plotting_mse()
+    for degree in range(1, 6):
+        for data_set in data_sets:
+            if data_set == 'kin8nm' or data_set == 'supernova':
+                problem = Problem(data_set, 'pgd', degree, 10, lamb_range, 1, 1, 0.01, 1000)
+                problem.cross_validation()
+                problem.train_test()
+                problem.plotting_error()
+                problem.plotting_mse()
+            else:
+                problem = Problem(data_set, 'pgd', degree, 10, lamb_range, 1, 1, 0.01, 1)
+                problem.cross_validation()
+                problem.train_test()
+                problem.plotting_error()
+                problem.plotting_mse()
