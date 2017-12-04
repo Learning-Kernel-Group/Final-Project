@@ -100,6 +100,7 @@ class Problem():
         plt.legend()
         plt.savefig(
             'figure-error-{}-degree{}.png'.format(self.dataset_name, self.degree), dpi=250)
+        plt.close('all')
 
     def plotting_mse(self):
         plt.style.use('ggplot')
@@ -117,6 +118,7 @@ class Problem():
         plt.legend()
         plt.savefig(
             'figure-mse-{}-degree{}.png'.format(self.dataset_name, self.degree), dpi=250)
+        plt.close('all')
 
     def benchmark_svm(self):
         plt.style.use('ggplot')
@@ -148,6 +150,7 @@ class Problem():
         ax.set_ylabel(r"Classification Error")
         plt.legend()
         plt.savefig('figure-svm-{}.png'.format(self.dataset_name), dpi=250)
+        plt.close('all')
 
     def benchmark_knn(self):
         plt.style.use('ggplot')
@@ -173,6 +176,7 @@ class Problem():
         ax.set_ylabel(r"Classification Error")
         plt.legend()
         plt.savefig('figure-knn-{}.png'.format(self.dataset_name), dpi=250)
+        plt.close('all')
 
 
 if __name__ == '__main__':
@@ -203,23 +207,25 @@ if __name__ == '__main__':
     data_sets = ['breast-cancer', 'diabetes', 'fourclass',
                  'german', 'heart', 'sonar', 'kin8nm', 'supernova']
     # lamb_range = [1, 10, 100]
-    for degree in range(1, 6):
-        for data_set in data_sets:
-            if data_set == 'kin8nm' or data_set == 'supernova':
-                problem = Problem(data_set, 'pgd', degree, 10,
-                                  lamb_range, 1, 1, 0.01, 1000)
-                problem.cross_validation()
-                problem.train_test()
-                problem.plotting_error()
-                problem.plotting_mse()
-                problem.benchmark_svm()
-                problem.benchmark_knn()
-            else:
-                problem = Problem(data_set, 'pgd', degree,
-                                  10, lamb_range, 1, 1, 0.01, 1)
-                problem.cross_validation()
-                problem.train_test()
-                problem.plotting_error()
-                problem.plotting_mse()
-                problem.benchmark_svm()
-                problem.benchmark_knn()
+    # for degree in range(1, 6):
+    #     for data_set in data_sets:
+    #         if data_set == 'kin8nm' or data_set == 'supernova':
+    #             problem = Problem(data_set, 'pgd', degree, 10,
+    #                               lamb_range, 1, 1, 0.01, 1000)
+    #             problem.cross_validation()
+    #             problem.train_test()
+    #             problem.plotting_error()
+    #             problem.plotting_mse()
+    #         else:
+    #             problem = Problem(data_set, 'pgd', degree,
+    #                               10, lamb_range, 1, 1, 0.01, 1)
+    #             problem.cross_validation()
+    #             problem.train_test()
+    #             problem.plotting_error()
+    #             problem.plotting_mse()
+
+    for data_set in data_sets:
+        problem = Problem(data_set, 'pgd', 1, 10,
+                          lamb_range, 1, 1, 0.01, 1)
+        problem.benchmark_svm()
+        problem.benchmark_knn()
