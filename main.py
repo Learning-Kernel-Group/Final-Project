@@ -225,7 +225,8 @@ if __name__ == '__main__':
     #             problem.plotting_mse()
 
     for data_set in data_sets:
-        problem = Problem(data_set, 'pgd', 1, 10,
-                          lamb_range, 1, 1, 0.01, 1)
-        problem.benchmark_svm()
-        problem.benchmark_knn()
+        if data_set != 'sonar':
+            problem = Problem(data_set, 'pgd', 1, 10,
+                              lamb_range, 1, 1, 0.01, 1)
+            problem.benchmark_svm()
+            problem.benchmark_knn()
