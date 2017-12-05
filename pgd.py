@@ -21,7 +21,7 @@ def pgd(features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsam
         print('Computing weighted kernels...')
         weighted_kernels = _weighting_kernels(base_kers, mu, p)
         sum_ker = np.sum(weighted_kernels, 0)
-        quad_ker = sum_ker ** 2
+        quad_ker = sum_ker ** degree
         print('Computing derivatives of the objective function...')
         derivatives = _partial_derivatives(
             quad_ker, sum_ker, base_kers, lamb, labels, p)

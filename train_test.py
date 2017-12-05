@@ -1,6 +1,9 @@
 import numpy as np
 import pgd as descent
+import kernel as bkernel
 from sklearn.model_selection import RepeatedKFold
+from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
 
 
 def hypothesis(training_features, testing_features, subsampling):
@@ -67,11 +70,29 @@ def cross_validation(features, labels, folds, method, degree, lamb, eta, norm_bo
     return np.array(error_arr), np.array(mse_arr)
 
 
+def cross_validation_sk(features, labels, folds, method, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
+    training_result, poly_ker = training(features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling, method='pgd')
+    svm = SVC(kernel='precomputed')
+    labels = labels[::subsampling]
+    svm.fit(poly_ker, labels)
+    error_arr = 1. - cross_val_score(svm, poly_ker, labels, cv=folds)
+    return error_arr
+
+
 def training(features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling, method='pgd'):
     if method == 'pgd':
         training_result, poly_ker = descent.pgd(
             features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling)
         return training_result, poly_ker
+
+
+def training_sk(features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling, method='pgd'):
+    training_result, poly_ker = training(
+        features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling, method)
+    svm = SVC(kernel='precomputed')
+    labels = labels[::subsampling]
+    svm.fit(poly_ker, labels)
+    return svm, training_result, poly_ker
 
 
 def testing(training_result, poly_ker, features, labels, testing_features, testing_labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
@@ -82,6 +103,22 @@ def testing(training_result, poly_ker, features, labels, testing_features, testi
     error = error_rate(predicts, testing_labels)
     mse = mean_squared_error(predicts, testing_labels)
     return error, mse
+
+
+def testing_sk(svm, training_result, poly_ker, features, labels, testing_features, testing_labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
+
+    def test_kernel(testing_features, features, subsampling):
+        n, p = features.shape
+        test_kernel_arr = bkernel.base_kernel_arr_test(
+            testing_features, features, subsampling)
+        weighted_kernels = descent._weighting_kernels(
+            test_kernel_arr, training_result, p)
+        sum_ker = np.sum(weighted_kernels, 0)
+        return sum_ker
+
+    error = 1. - svm.score(test_kernel(testing_features,
+                                       features, subsampling), testing_labels)
+    return error
 
 
 if __name__ == '__main__':

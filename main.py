@@ -73,6 +73,12 @@ class Problem():
         self.error_arr_array = np.array(self.error_arr_array)
         self.mse_arr_array = np.array(self.mse_arr_array)
 
+    def cross_validation_sk(self):
+        for lamb in self.lamb_range:
+            error_arr = tes.cross_validation_sk(self.features, self.labels, self.folds, self.method_name, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
+            self.error_arr_array.append(error_arr)
+        self.error_arr_array = np.array(self.error_arr_array)
+
     def train_test(self):
         for lamb in self.lamb_range:
             self.training_result, self.poly_ker = tes.training(
@@ -83,6 +89,16 @@ class Problem():
             self.mse_array.append(mse)
         self.error_array = np.array(self.error_array)
         self.mse_array = np.array(self.mse_array)
+
+    def train_test_sk(self):
+        for lamb in self.lamb_range:
+            svm, self.training_result, self.poly_ker = tes.training_sk(
+                self.features, self.labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling, method=self.method_name)
+
+            error = tes.testing_sk(svm, self.training_result, self.poly_ker, self.features, self.labels, self.testing_features,
+                                     self.testing_labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
+            self.error_array.append(error)
+        self.error_array = np.array(self.error_array)
 
     def plotting_error(self):
         plt.style.use('ggplot')
@@ -205,7 +221,7 @@ if __name__ == '__main__':
 
     lamb_range = [1, 2, 4, 6, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     data_sets = ['breast-cancer', 'diabetes', 'fourclass',
-                 'german', 'heart', 'sonar', 'kin8nm', 'supernova']
+                 'german', 'heart', 'ionosphere', 'sonar', 'kin8nm', 'supernova']
     # lamb_range = [1, 10, 100]
     # for degree in range(1, 6):
     #     for data_set in data_sets:
@@ -224,9 +240,17 @@ if __name__ == '__main__':
     #             problem.plotting_error()
     #             problem.plotting_mse()
 
-    for data_set in data_sets:
-        if data_set != 'sonar':
-            problem = Problem(data_set, 'pgd', 1, 10,
-                              lamb_range, 1, 1, 0.01, 1)
-            problem.benchmark_svm()
-            problem.benchmark_knn()
+    # for data_set in data_sets:
+    #     if data_set != 'sonar':
+    #         problem = Problem(data_set, 'pgd', 1, 10,
+    #                           lamb_range, 1, 1, 0.01, 1)
+    #         problem.benchmark_svm()
+    #         problem.benchmark_knn()
+
+    for degree in range(1, 6):
+        data_set = 'ionosphere'
+        problem = Problem(data_set, 'pgd', degree,
+                          10, lamb_range, 1, 1, 0.01, 1)
+        problem.cross_validation_sk()
+        problem.train_test_sk()
+        problem.plotting_error()
