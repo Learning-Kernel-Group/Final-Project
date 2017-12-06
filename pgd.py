@@ -44,11 +44,11 @@ def _normalization(mu_prime, mu_0, norm_bound):
 def _partial_derivatives(quad_ker, sum_ker, base_kernels, lamb, labels, p):
     derivatives = []
     for k in range(p):
-        center = sum_ker * base_kernels[k]
+        center = (sum_ker ** (degree-1)) * base_kernels[k]#
         print('Inverting matrix...')
         inverse = _inverse_part(quad_ker, lamb)
         edge_part = inverse.dot(labels)
-        derivatives.append(-2 * ((edge_part.T).dot(center)).dot(edge_part))
+        derivatives.append(-degree * ((edge_part.T).dot(center)).dot(edge_part))#
     return np.array(derivatives)
 
 
