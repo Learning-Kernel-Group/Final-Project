@@ -24,7 +24,7 @@ def pgd(features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsam
         quad_ker = sum_ker ** degree
         print('Computing derivatives of the objective function...')
         derivatives = _partial_derivatives(
-            quad_ker, sum_ker, base_kers, lamb, labels, p)
+            quad_ker, sum_ker, base_kers, degree, lamb, labels, p)
         print('Updating the weight vector...')
         mu_prime = mu - eta * derivatives
         mu_prime = _normalization(mu_prime, mu_0, norm_bound)
@@ -41,7 +41,7 @@ def _normalization(mu_prime, mu_0, norm_bound):
     return difference + mu_0
 
 
-def _partial_derivatives(quad_ker, sum_ker, base_kernels, lamb, labels, p):
+def _partial_derivatives(quad_ker, sum_ker, base_kernels, degree, lamb, labels, p):
     derivatives = []
     for k in range(p):
         center = (sum_ker ** (degree-1)) * base_kernels[k] # sum_ker * base_kernels[k]
