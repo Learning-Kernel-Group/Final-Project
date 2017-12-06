@@ -72,7 +72,7 @@ def cross_validation(features, labels, folds, method, degree, lamb, eta, norm_bo
 
 def cross_validation_sk(features, labels, folds, method, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
     training_result, poly_ker = training(features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling, method='pgd')
-    svm = SVC(kernel='precomputed')
+    svm = SVC(kernel='precomputed',C=2**8)
     labels = labels[::subsampling]
     svm.fit(poly_ker, labels)
     error_arr = 1. - cross_val_score(svm, poly_ker, labels, cv=folds)
@@ -89,7 +89,7 @@ def training(features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, s
 def training_sk(features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling, method='pgd'):
     training_result, poly_ker = training(
         features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling, method)
-    svm = SVC(kernel='precomputed')
+    svm = SVC(kernel='precomputed',C=2**8)
     labels = labels[::subsampling]
     svm.fit(poly_ker, labels)
     return svm, training_result, poly_ker
