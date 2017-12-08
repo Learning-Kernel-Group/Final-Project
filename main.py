@@ -1,4 +1,5 @@
 import numpy as np
+import multiprocessing as mp
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
@@ -75,7 +76,8 @@ class Problem():
 
     def cross_validation_sk(self):
         for lamb in self.lamb_range:
-            error_arr = tes.cross_validation_sk(self.features, self.labels, self.folds, self.method_name, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
+            error_arr = tes.cross_validation_sk(self.features, self.labels, self.folds, self.method_name,
+                                                self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
             self.error_arr_array.append(error_arr)
         self.error_arr_array = np.array(self.error_arr_array)
 
@@ -96,7 +98,7 @@ class Problem():
                 self.features, self.labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling, method=self.method_name)
 
             error = tes.testing_sk(svm, self.training_result, self.poly_ker, self.features, self.labels, self.testing_features,
-                                     self.testing_labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
+                                   self.testing_labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
             self.error_array.append(error)
         self.error_array = np.array(self.error_array)
 
@@ -195,6 +197,21 @@ class Problem():
         plt.close('all')
 
 
+def multiprocessing_func(data_set, degree, lamb_range):
+    if data_set == 'kin8nm' or data_set == 'supernova':
+        problem = Problem(data_set, 'pgd', degree, 10,
+                          lamb_range, 1, 1, 0.01, 100)
+        problem.cross_validation()
+        problem.train_test()
+        problem.plotting_error()
+    else:
+        problem = Problem(data_set, 'pgd', degree,
+                          10, lamb_range, 1, 1, 0.01, 1)
+        problem.cross_validation()
+        problem.train_test()
+        problem.plotting_error()
+
+
 if __name__ == '__main__':
     # features, labels, testing_features, testing_labels = import_data_from(
     #     'ionosphere')
@@ -222,23 +239,18 @@ if __name__ == '__main__':
     lamb_range = [1, 2, 4, 6, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     data_sets = ['breast-cancer', 'diabetes', 'fourclass',
                  'german', 'heart', 'ionosphere', 'sonar', 'kin8nm', 'supernova']
-    # lamb_range = [1, 10, 100]
-    # for degree in range(1, 6):
-    #     for data_set in data_sets:
-    #         if data_set == 'kin8nm' or data_set == 'supernova':
-    #             problem = Problem(data_set, 'pgd', degree, 10,
-    #                               lamb_range, 1, 1, 0.01, 1000)
-    #             problem.cross_validation()
-    #             problem.train_test()
-    #             problem.plotting_error()
-    #             problem.plotting_mse()
-    #         else:
-    #             problem = Problem(data_set, 'pgd', degree,
-    #                               10, lamb_range, 1, 1, 0.01, 1)
-    #             problem.cross_validation()
-    #             problem.train_test()
-    #             problem.plotting_error()
-    #             problem.plotting_mse()
+    processes = []
+    for degree in range(1, 6):
+        for data_set in data_sets:
+            process = mp.Process(target=multiprocessing_func,
+                                 args=(data_set, degree, lamb_range))
+            processes.append(process)
+
+    for p in processes:
+        p.start()
+
+    for p in processes:
+        p.join()
 
     # for data_set in data_sets:
     #     if data_set != 'sonar':
