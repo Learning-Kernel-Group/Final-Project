@@ -259,10 +259,10 @@ if __name__ == '__main__':
     #         problem.benchmark_svm()
     #         problem.benchmark_knn()
 
-    for degree in range(1, 6):
-        data_set = 'ionosphere'
-        problem = Problem(data_set, 'pgd', degree,
-                          10, lamb_range, 1, 1, 0.01, 1)
-        problem.cross_validation_sk()
-        problem.train_test_sk()
-        problem.plotting_error()
+    # for degree in range(1, 6):
+    #     data_set = 'ionosphere'
+    #     problem = Problem(data_set, 'pgd', degree,
+    #                       10, lamb_range, 1, 1, 0.01, 1)
+    #     problem.cross_validation_sk()
+    #     problem.train_test_sk()
+    #     problem.plotting_error()
