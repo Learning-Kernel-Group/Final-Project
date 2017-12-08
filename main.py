@@ -201,14 +201,14 @@ def multiprocessing_func(data_set, degree, lamb_range):
     if data_set == 'kin8nm' or data_set == 'supernova':
         problem = Problem(data_set, 'pgd', degree, 10,
                           lamb_range, 1, 1, 0.01, 100)
-        problem.cross_validation()
-        problem.train_test()
+        problem.cross_validation_sk()
+        problem.train_test_sk()
         problem.plotting_error()
     else:
         problem = Problem(data_set, 'pgd', degree,
                           10, lamb_range, 1, 1, 0.01, 1)
-        problem.cross_validation()
-        problem.train_test()
+        problem.cross_validation_sk()
+        problem.train_test_sk()
         problem.plotting_error()
 
 
