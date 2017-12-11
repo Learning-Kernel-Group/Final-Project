@@ -1,78 +1,58 @@
+# Luca
+
 import numpy as np
-import kernel
+from kernel import make_base_kernels
 
+# alg_l2 = Algorithm 2
+# Input: 	- xTrain: vector of sample features
+#			- yTrain: vector of sample labels
+#			- lam: KRR parameter
+#			- eta: interpolation parameter
+#			- L: optimization problem parameter (Lambda)
+#			- mu0: optimization problem parameter
+#			- eps: tolerance stopping parameter
+#			- mu_init: inital value of mu in the iteration
+#			- sumbsampling: sumbsampling factor
+# Output: 	- mu_prime: found value of mu
+#			- poly_ker: final kernel
 
-def _get_base_kernels(features, subsampling=1):
-    return kernel.base_kernel_arr(features, subsampling)
+def get_base_kernels(features, subsampling=1):
+    return make_base_kernels(features, subsampling=subsampling)
 
-
-def pgd(features, labels, degree, lamb, eta, norm_bound, tolerence, mu_0, subsampling):
-    print('Start running pgd on kernels...')
-    n, p = features.shape
+def find_kernel(x, y, degree=1, lam=10., eta=0.2, L=1., mu0=None, mu_init=None, eps=1e-3, subsampling=1):
+    (m, p) = x.shape
+    m = m / subsampling + int(subsampling > 1)
     mu = np.zeros(p)
-    mu_prime = np.ones(p)
-    print('Start getting base kernels...')
-    base_kers = _get_base_kernels(features, subsampling)
-    labels = labels[::subsampling]
-    quad_ker = np.empty(1)
-    print('Start projection-based gradient descent loop...')
-    while np.linalg.norm(mu - mu_prime) > tolerence:
+    mu_prime = mu_init
+    base_kernels = get_base_kernels(x, subsampling=subsampling)
+    gram = sum_weight_kernels(base_kernels, mu) ** degree + lam * np.eye(m) # gram = K_mu + lam * I
+    y = y[::subsampling]
+    al = np.linalg.solve(gram, y)
+    it = 0
+    it_max = 100
+    while np.linalg.norm(mu - mu_prime) > eps and it < it_max:
         mu = mu_prime
-        print('Computing weighted kernels...')
-        weighted_kernels = _weighting_kernels(base_kers, mu, p)
-        sum_ker = np.sum(weighted_kernels, 0)
-        quad_ker = sum_ker ** degree
-        print('Computing derivatives of the objective function...')
-        derivatives = _partial_derivatives(
-            quad_ker, sum_ker, base_kers, lamb, labels, p)
-        print('Updating the weight vector...')
-        mu_prime = mu - eta * derivatives
-        mu_prime = _normalization(mu_prime, mu_0, norm_bound)
-        print('The weight vector for this round is:\n', mu_prime)
-    weighted_kernels = _weighting_kernels(base_kers, mu_prime, p)
-    sum_ker = np.sum(weighted_kernels, 0)
-    poly_ker = sum_ker ** degree
-    return mu_prime, poly_ker
+        gram = sum_weight_kernels(base_kernels, mu) ** degree + lam * np.eye(m)
+        al = np.linalg.solve(gram,y)
+        mu_prime = mu + eta * derivatives(degree, base_kernels, mu, al)
+        mu = mu0 + L * (mu -mu0) / (np.linalg.norm(mu - mu0) + 1e-9)
+        it += 1
+    mu = mu_prime
+    print 'L = ', L, 'lam = ', lam 
+    print 'iter = ', it
+    base_kernels = get_base_kernels(x, subsampling=1)
+    return mu, sum_weight_kernels(base_kernels, mu) ** degree
 
+def derivatives(degree, base_kernels, mu, al):
+    d = []
+    tmp = sum_weight_kernels(base_kernels, mu)
+    for k in range(mu.size):
+        center = (tmp ** (degree -1)) * base_kernels[k, :, :]
+        d.append(degree * ((al.T).dot(center)).dot(al))
+    return np.array(d)
 
-def _normalization(mu_prime, mu_0, norm_bound):
-    difference = mu_prime - mu_0
-    difference = norm_bound * difference / np.linalg.norm(difference)
-    return difference + mu_0
-
-
-def _partial_derivatives(quad_ker, sum_ker, base_kernels, lamb, labels, p):
-    derivatives = []
-    for k in range(p):
-        center = (sum_ker ** (degree-1)) * base_kernels[k]#
-        print('Inverting matrix...')
-        inverse = _inverse_part(quad_ker, lamb)
-        edge_part = inverse.dot(labels)
-        derivatives.append(-degree * ((edge_part.T).dot(center)).dot(edge_part))#
-    return np.array(derivatives)
-
-
-def _inverse_part(quad_ker, lamb):
-    mat = quad_ker + lamb * np.eye(quad_ker.shape[0])
-    return np.linalg.inv(mat)
-
-
-def _weighting_kernels(base_kernels, mu, p):
-    for k in range(p):
-        base_kernels[k, :, :] = mu[k] * base_kernels[k, :, :]
-    return base_kernels
-
-
-if __name__ == '__main__':
-    # a = [1, 2, 3]
-    # b = [[[5, 5], [5, 5]], [[7, 7], [7, 7]], [[9, 9], [9, 9]]]
-    # a = np.array(a)
-    # b = np.array(b)
-    # for i in range(a.shape[0]):
-    #     b[i,:,:] = a[i] * b[i,:,:]
-    # print(b)
-    # b = np.sum(b, 0)
-    # print(b)
-    features = np.load('./Data Sets/regression-datasets-kin8nm_features_train.npy')
-    labels = np.load('./Data Sets/regression-datasets-kin8nm_labels_train.npy')
-    training_result, quad_ker = pgd(features, labels, 10, 1, 1, 0.01, np.zeros(8), 100)
+def sum_weight_kernels(base_kernels, mu):
+    tmp = base_kernels.copy()
+    for k in range(mu.size):
+        tmp[k, :, :] = mu[k] * tmp[k, :, :]
+    return np.sum(tmp, 0)

@@ -1,256 +1,113 @@
+import pickle
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-from matplotlib import pyplot as plt
-import train_test as tes
-import plot
-from matplotlib import rc
+import matplotlib.pyplot as plt
 from sklearn.svm import SVC
+from sklearn.kernel_ridge import KernelRidge
 from sklearn.neighbors import KNeighborsClassifier
-# rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-rc('text', usetex=True)
-
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import mean_squared_error
+import pgd_l2
+import pgd_new
+import pgd
+import kernel
 
 class Problem():
 
-    def __init__(self, dataset_name, method_name, degree, folds, lamb_range, eta, norm_bound, tolerence, subsampling):
-        self.dataset_name = dataset_name
-        self.method_name = method_name
-        self.lamb_range = lamb_range
+    def __init__(self, dataset=None, alg=None, method=None, degree=1, c_range=[1.],
+        lam_range=[1.], eta=1., L_range=[1.], mu0=1., mu_init=1., eps=1e-3, subsampling=1):
+        
+        self.dataset = dataset
+        self.find_kernel = eval(alg).find_kernel
+        self.sum_weight_kernels = eval(alg).sum_weight_kernels
+        self.method = method
         self.degree = degree
-        self.folds = folds
+        self.c_range = c_range
+        self.lam_range = lam_range
         self.eta = eta
-        self.norm_bound = norm_bound
-        self.tolerence = tolerence
+        self.L_range = L_range
+        with open('data_python/' + self.dataset, 'rb') as _file:
+            [self.xTrain, self.yTrain, self.xTest, self.yTest] = pickle.load(_file)
+        self.n_features = self.xTrain.shape[1]
+        self.mu0 = mu0 * np.ones(self.n_features)
+        self.mu_init = mu_init * np.ones(self.n_features)
+        self.eps = eps
         self.subsampling = subsampling
-        self.error_array = []
-        self.mse_array = []
-        self.error_arr_array = []
-        self.mse_arr_array = []
-        self.training_result = None
-        self.poly_ker = None
-
-        self.features, self.labels, self.testing_features, self.testing_labels = self.import_data_from()
-        self.n, self.p = self.features.shape
-        self.mu_0 = np.zeros(self.p)
-
-    def import_data_from(self):
-        if self.dataset_name == 'kin8nm':
-            features = np.load(
-                './Data Sets/regression-datasets-kin8nm_features_train.npy')
-            labels = np.load(
-                './Data Sets/regression-datasets-kin8nm_labels_train.npy')
-            testing_features = np.load(
-                './Data Sets/regression-datasets-kin8nm_features_test.npy')
-            testing_labels = np.load(
-                './Data Sets/regression-datasets-kin8nm_labels_test.npy')
-        elif self.dataset_name == 'supernova':
-            features = np.load(
-                './Data Sets/' + self.dataset_name + '_features_train.npy')
-            labels = np.load(
-                './Data Sets/' + self.dataset_name + '_labels_train.npy')
-            testing_features = np.load(
-                './Data Sets/' + self.dataset_name + '_features_test.npy')
-            testing_labels = np.load(
-                './Data Sets/' + self.dataset_name + '_labels_test.npy')
-        else:
-            features = np.load(
-                './Data Sets/UCI Data Sets/' + self.dataset_name + '_features_train.npy')
-            labels = np.load(
-                './Data Sets/UCI Data Sets/' + self.dataset_name + '_labels_train.npy')
-            testing_features = np.load(
-                './Data Sets/UCI Data Sets/' + self.dataset_name + '_features_test.npy')
-            testing_labels = np.load(
-                './Data Sets/UCI Data Sets/' + self.dataset_name + '_labels_test.npy')
-        return features, labels, testing_features, testing_labels
-
-    def cross_validation(self):
-        for lamb in self.lamb_range:
-            error_arr, mse_arr = tes.cross_validation(self.features, self.labels, self.folds, self.method_name, self.degree, lamb,
-                                                      self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
-            self.error_arr_array.append(error_arr)
-            self.mse_arr_array.append(mse_arr)
-        self.error_arr_array = np.array(self.error_arr_array)
-        self.mse_arr_array = np.array(self.mse_arr_array)
-
-    def cross_validation_sk(self):
-        for lamb in self.lamb_range:
-            error_arr = tes.cross_validation_sk(self.features, self.labels, self.folds, self.method_name, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
-            self.error_arr_array.append(error_arr)
-        self.error_arr_array = np.array(self.error_arr_array)
-
-    def train_test(self):
-        for lamb in self.lamb_range:
-            self.training_result, self.poly_ker = tes.training(
-                self.features, self.labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling, method=self.method_name)
-            error, mse = tes.testing(self.training_result, self.poly_ker, self.features, self.labels, self.testing_features,
-                                     self.testing_labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
-            self.error_array.append(error)
-            self.mse_array.append(mse)
-        self.error_array = np.array(self.error_array)
-        self.mse_array = np.array(self.mse_array)
-
-    def train_test_sk(self):
-        for lamb in self.lamb_range:
-            svm, self.training_result, self.poly_ker = tes.training_sk(
-                self.features, self.labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling, method=self.method_name)
-
-            error = tes.testing_sk(svm, self.training_result, self.poly_ker, self.features, self.labels, self.testing_features,
-                                     self.testing_labels, self.degree, lamb, self.eta, self.norm_bound, self.tolerence, self.mu_0, self.subsampling)
-            self.error_array.append(error)
-        self.error_array = np.array(self.error_array)
-
-    def plotting_error(self):
-        plt.style.use('ggplot')
-        plt.rc('text', usetex=True)
-        plt.rc('font', family='serif')
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        plot.plot_as_seq(self.error_array, self.lamb_range, 'Test Error', ax)
-        plot.plot_as_errorbar(self.error_arr_array,
-                              self.lamb_range, 'Cross Validation Error', ax)
-        ax.set_title(r"Data Set {} with degree $d = {{{}}}$".format(
-            self.dataset_name, self.degree))
-        ax.set_xlabel(r"$\lambda$")
-        ax.set_ylabel(r"Error rate")
-        plt.legend()
-        plt.savefig(
-            'figure-error-{}-degree{}.png'.format(self.dataset_name, self.degree), dpi=250)
-        plt.close('all')
-
-    def plotting_mse(self):
-        plt.style.use('ggplot')
-        plt.rc('text', usetex=True)
-        plt.rc('font', family='serif')
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        plot.plot_as_seq(self.mse_array, self.lamb_range, 'Test MSE', ax)
-        plot.plot_as_errorbar(self.mse_arr_array,
-                              self.lamb_range, 'Cross Validation MSE', ax)
-        ax.set_title(r"Data Set {} with degree $d = {{{}}}$".format(
-            self.dataset_name, self.degree))
-        ax.set_xlabel(r"$\lambda$")
-        ax.set_ylabel(r"Mean Squared Error")
-        plt.legend()
-        plt.savefig(
-            'figure-mse-{}-degree{}.png'.format(self.dataset_name, self.degree), dpi=250)
-        plt.close('all')
-
-    def benchmark_svm(self):
-        plt.style.use('ggplot')
-        plt.rc('text', usetex=True)
-        plt.rc('font', family='serif')
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        k_range = [-8, -4, -2, -1, 0, 1, 2, 4, 8]
-        k_range = np.array(k_range)
-        c_range = 2 ** k_range.astype(float)
-        gamma_range = [0.5, 1, 2]
-
-        for g in gamma_range:
-            score_arr = []
-            for c in c_range:
-                print('Performing SVM...')
-                clf = SVC(kernel='rbf', C=c, gamma=g)
-                clf.fit(self.features, self.labels)
-                score = clf.score(self.testing_features, self.testing_labels)
-                score_arr.append(score)
-            score_arr = np.array(score_arr)
-            error_arr = np.ones(score_arr.shape[0]) - score_arr
-            plot.plot_as_seq(error_arr, k_range,
-                             r"$\gamma = {{{}}}$".format(g), ax)
-
-        ax.set_title(
-            "Data Set {} with SVM benchmark".format(self.dataset_name))
-        ax.set_xlabel(r"$k$")
-        ax.set_ylabel(r"Classification Error")
-        plt.legend()
-        plt.savefig('figure-svm-{}.png'.format(self.dataset_name), dpi=250)
-        plt.close('all')
-
-    def benchmark_knn(self):
-        plt.style.use('ggplot')
-        plt.rc('text', usetex=True)
-        plt.rc('font', family='serif')
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        k_range = range(2, 31)
-        score_arr = []
-        for k in k_range:
-            print('Performing kNN...')
-            knn = KNeighborsClassifier(n_neighbors=k, weights="distance")
-            knn.fit(self.features, self.labels)
-            score = knn.score(self.testing_features, self.testing_labels)
-            score_arr.append(score)
-        score_arr = np.array(score_arr)
-        error_arr = np.ones(score_arr.shape[0]) - score_arr
-        plot.plot_as_seq(error_arr, k_range, r"kNN Classification Error", ax)
-
-        ax.set_title(
-            "Data Set {} with kNN benchmark".format(self.dataset_name))
-        ax.set_xlabel(r"$k$")
-        ax.set_ylabel(r"Classification Error")
-        plt.legend()
-        plt.savefig('figure-knn-{}.png'.format(self.dataset_name), dpi=250)
-        plt.close('all')
-
+        self.best_L = None
+        self.best_lam = None
+        self.best_c = None
+        self.model = None
+        self.mu = None
+        self.make_test_kernels = kernel.make_test_kernels
+        self.cv_error = {}
+        self.cv_error_best = None
+        self.test_error = None
+        
+    def get_classifier(self, c=1.):
+        if self.method == 'SVC':
+            return SVC(C=c, kernel='precomputed')
+        if self.method == 'KRR':
+            return KernelRidge(alpha=c, kernel='precomputed')
+    
+    def get_kernel(self, lam=1., L=1.):
+        return self.find_kernel(self.xTrain, self.yTrain, degree=self.degree, lam=lam, eta=self.eta,
+            L=L, mu0=self.mu0, mu_init=self.mu_init, eps=self.eps, subsampling=self.subsampling)
+        
+    def cv(self):
+        for L in self.L_range:
+            for lam in self.lam_range:
+                _, gTrain = self.get_kernel(lam=lam, L=L)
+                for c in self.c_range:
+                    classifier = self.get_classifier(c=c)
+                    self.cv_error[L,lam,c] = 1. - cross_val_score(classifier, gTrain, self.yTrain, cv=5).mean()
+                    print 'c = ', c, ' -> ', self.cv_error[L,lam,c]
+        self.best_L, self.best_lam, self.best_c = min(self.cv_error, key=self.cv_error.get)
+        self.cv_error_best = self.cv_error[self.best_L,self.best_lam, self.best_c]
+        classifier = self.get_classifier(c=self.best_c)
+        self.mu, self.gTrain = self.get_kernel(lam=self.best_lam, L=self.best_L)
+        self.model = classifier.fit(gTrain, self.yTrain)
+        
+    def score(self):
+        tmp = self.make_test_kernels(self.xTrain, self.xTest, subsampling=self.subsampling)
+        self.gTest = self.sum_weight_kernels(tmp, self.mu) ** self.degree
+        self.test_error = 1. - self.model.score(self.gTest, self.yTest)
+        
+    def mse(self):
+        self.mse_cv_error = np.sqrt(mean_squared_error(self.yTrain,self.model.predict(self.gTrain)))
+        self.mse_test_error = np.sqrt(mean_squared_error(self.yTest,self.model.predict(self.gTest)))
+        
+    def benchmark(self, method=None):
+        print 'benchmark model: ' + method
+        classifier = eval(method)
+        print 'cv error -> ', 1. - cross_val_score(classifier, self.xTrain, self.yTrain, cv=5).mean()
+        classifier.fit(self.xTrain,self.yTrain)
+        print 'test error -> ', 1. - classifier.score(self.xTest,self.yTest)
 
 if __name__ == '__main__':
-    # features, labels, testing_features, testing_labels = import_data_from(
-    #     'ionosphere')
-    # n, p = features.shape
-    # error_array = []
-    # error_arr_array = []
-    # lamb_range = range(10, 101, 10)
-    # for lamb in lamb_range:
-    #     training_result, quad_ker = tes.training(
-    #         features, labels, 10, 1, 1, 0.01, np.zeros(p), 1, method='pgd')
-    #     error = tes.testing(training_result, quad_ker, features, labels, testing_features,
-    #                         testing_labels, 10, 1, 1, 0.01, np.zeros(p), 1)
-    #     error_arr = tes.cross_validation(
-    #         features, labels, 10, 10, 1, 1, 0.01, np.zeros(p), 1)
-    #     error_array.append(error)
-    #     error_arr_array.append(error_arr)
-    # error_array = np.array(error_array)
-    # error_arr_array = np.array(error_arr_array)
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # plot.plot_as_seq(error_array, lamb_range, ax)
-    # plot.plot_as_errorbar(error_arr_array, lamb_range, ax)
-    # plt.savefig('figure.png', dpi=200)
-
-    lamb_range = [1, 2, 4, 6, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    data_sets = ['breast-cancer', 'diabetes', 'fourclass',
-                 'german', 'heart', 'ionosphere', 'sonar', 'kin8nm', 'supernova']
-    # lamb_range = [1, 10, 100]
-    # for degree in range(1, 6):
-    #     for data_set in data_sets:
-    #         if data_set == 'kin8nm' or data_set == 'supernova':
-    #             problem = Problem(data_set, 'pgd', degree, 10,
-    #                               lamb_range, 1, 1, 0.01, 1000)
-    #             problem.cross_validation()
-    #             problem.train_test()
-    #             problem.plotting_error()
-    #             problem.plotting_mse()
-    #         else:
-    #             problem = Problem(data_set, 'pgd', degree,
-    #                               10, lamb_range, 1, 1, 0.01, 1)
-    #             problem.cross_validation()
-    #             problem.train_test()
-    #             problem.plotting_error()
-    #             problem.plotting_mse()
-
-    # for data_set in data_sets:
-    #     if data_set != 'sonar':
-    #         problem = Problem(data_set, 'pgd', 1, 10,
-    #                           lamb_range, 1, 1, 0.01, 1)
-    #         problem.benchmark_svm()
-    #         problem.benchmark_knn()
-
-    for degree in range(1, 6):
-        data_set = 'ionosphere'
-        problem = Problem(data_set, 'pgd', degree,
-                          10, lamb_range, 1, 1, 0.01, 1)
-        problem.cross_validation_sk()
-        problem.train_test_sk()
-        problem.plotting_error()
+    
+    data_sets = {1:'ionosphere', 2:'sonar', 3:'breast-cancer', 4:'diabetes', 5:'fourclass', 6:'german',
+        7:'heart', 8:'kin8nm', 9:'madelon', 10:'supernova'}
+    
+    data = 8
+    alg = 'pgd' 
+    method = 'KRR'
+    degree = 2
+    c_range = [2 ** i for i in [-8,-4,-2,0,2,4,8]]
+    lam_range = [0.01,0.1,1.,10.,50.,100.]
+    eta = 0.6
+    L_range = [1.,10.,50.,100.]
+    eps = 1e-3
+    subsampling = 100
+    mu0 = 1.
+    mu_init = 1.
+    
+    dataset = data_sets[data]
+    problem = Problem(dataset=dataset, alg=alg, method=method, degree=degree, 
+        c_range = c_range, lam_range=lam_range, eta=eta, L_range=L_range, mu0=mu0, mu_init=mu_init, eps=eps, subsampling=subsampling)
+    problem.cv()
+    print 'cv -> ', problem.cv_error_best
+    problem.score()
+    print 'test -> ', problem.test_error
+    problem.mse()
+    print 'mse cv -> ', problem.mse_cv_error
+    print 'mse test -> ', problem.mse_test_error
+    problem.benchmark(method='KernelRidge()')

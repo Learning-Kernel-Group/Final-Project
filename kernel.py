@@ -1,39 +1,25 @@
 import numpy as np
 
+def build_base_kernel(features):
+    v = features.reshape((-1, 1))
+    return v.dot(v.T)
 
-def _build_base_kernel(features, k):
-    vec = features[:, k].reshape((-1, 1))
-    kernel = vec.dot(vec.T)
-    return kernel
+def build_test_kernel(xTrain, xTest):
+    vTrain = xTrain.reshape((-1, 1))
+    vTest = xTest.reshape((-1, 1))
+    return vTest.dot(vTrain.T)
 
+def make_base_kernels(features, subsampling=1):
+    kernels_array = []
+    for k in range(features.shape[1]):
+        tmp = build_base_kernel(features[::subsampling, k])
+        kernels_array.append(tmp)
+    return np.array(kernels_array)
 
-def _build_base_kernel_test(testing_features, features, k):
-    vec_test = testing_features[:, k].reshape((-1, 1))
-    vec_train = features[:, k].reshape((-1, 1))
-    kernel = vec_test.dot(vec_train.T)
-    return kernel
-
-
-def base_kernel_arr(features, subsampling):
-    n, p = features.shape
-    arr = []
-    for k in range(p):
-        kernel = _build_base_kernel(features[::subsampling, :], k)
-        arr.append(kernel)
-    arr = np.array(arr)
-    return arr
-
-
-def base_kernel_arr_test(testing_features, features, subsampling):
-    n, p = features.shape
-    arr = []
-    for k in range(p):
-        kernel = _build_base_kernel_test(testing_features, features[::subsampling, :], k)
-        arr.append(kernel)
-    arr = np.array(arr)
-    return arr
-
-
-if __name__ == '__main__':
-    training_features = np.load('./Data Sets/regression-datasets-kin8nm_features_train.npy')
-    arr = base_kernel_arr(training_features, 100)
+def make_test_kernels(xTrain, xTest, subsampling=1):
+    kernels_array = []
+    for k in range(xTrain.shape[1]):
+        tmp = build_test_kernel(xTrain[:, k], xTest[:, k])
+        #tmp = build_test_kernel(xTrain[::subsampling, k], xTest[::subsampling, k])
+        kernels_array.append(tmp)
+    return np.array(kernels_array)
