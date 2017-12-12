@@ -55,8 +55,8 @@ class Problem():
                                 L=L, mu0=self.mu0, mu_init=self.mu_init, eps=self.eps, subsampling=self.subsampling)
 
     def cv(self):
-        for L in self.L_range:
-            for lam in self.lam_range:
+        for lam in self.lam_range:
+            for L in self.L_range:
                 _, gTrain = self.get_kernel(lam=lam, L=L)
                 for c in self.c_range:
                     classifier = self.get_classifier(c=c)

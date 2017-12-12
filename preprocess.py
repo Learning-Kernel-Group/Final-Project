@@ -3,6 +3,7 @@ import pickle
 from sklearn import preprocessing
 import re
 
+
 def _preprocess(data_set):
     with open('data/uci/' + data_set + '.data', 'r') as _file:
         data_array = []
@@ -21,8 +22,8 @@ def _preprocess(data_set):
                     labels[i] = 1
                 else:
                     labels[i] = -1
-        labels = labels.astype(np.float) # sure ?
-        frac = int( features.shape[0] * 0.8 )
+        labels = labels.astype(np.float)  # sure ?
+        frac = int(features.shape[0] * 0.8)
         xTrain = features[:frac, :]
         xTest = features[frac:, :]
         yTrain = labels[:frac]
@@ -33,7 +34,8 @@ def _preprocess(data_set):
         _list = [xTrain, yTrain, xTest, yTest]
         with open('data_python/' + data_set, 'wb') as _file:
             pickle.dump(_list, _file)
-            
+
+
 def preprocessor_libsvm_data(filename, format_label_func=lambda _: _):
     with open('data/uci/' + filename + '.data', 'r') as inputfile:
         features = []
@@ -53,12 +55,12 @@ def preprocessor_libsvm_data(filename, format_label_func=lambda _: _):
             features.append(feature)
             labels.append(label)
         features = np.array(features)
-        labels = np.array(labels).reshape((-1,1))
-        data = np.concatenate((features,labels),axis=1)
+        labels = np.array(labels).reshape((-1, 1))
+        data = np.concatenate((features, labels), axis=1)
         np.random.shuffle(data)
-        x = data[:,:-1]
-        y = data[:,-1]
-        frac = int( features.shape[0] * 0.8 )
+        x = data[:, :-1]
+        y = data[:, -1]
+        frac = int(features.shape[0] * 0.8)
         xTrain = x[:frac, :]
         xTest = x[frac:, :]
         yTrain = y[:frac]
@@ -70,21 +72,22 @@ def preprocessor_libsvm_data(filename, format_label_func=lambda _: _):
         with open('data_python/' + filename, 'wb') as _file:
             pickle.dump(_list, _file)
 
+
 def _load_and_save(dataset):
     xTrain = np.load('data/data_chris/' + dataset + '_features_train.npy')
     yTrain = np.load('data/data_chris/' + dataset + '_labels_train.npy')
     xTest = np.load('data/data_chris/' + dataset + '_features_test.npy')
     yTest = np.load('data/data_chris/' + dataset + '_labels_test.npy')
-    x = np.concatenate((xTrain,xTest),axis=0)
-    y = np.concatenate((yTrain,yTest),axis=0).reshape((-1,1))
-    data = np.concatenate((x,y),axis=1)
+    x = np.concatenate((xTrain, xTest), axis=0)
+    y = np.concatenate((yTrain, yTest), axis=0).reshape((-1, 1))
+    data = np.concatenate((x, y), axis=1)
     _preprocess()
-            
+
 if __name__ == '__main__':
     data_sets = ['ionosphere', 'sonar', 'kin8nm']
     for dataset in data_sets:
-        _preprocess(dataset) 
-    data_sets_chris = ['breast-cancer']#, 'diabetes', 'fourclass', 'german',
-        #'heart', 'kin8nm', 'madelon', 'supernova']
+        _preprocess(dataset)
+    data_sets_chris = ['breast-cancer']  # , 'diabetes', 'fourclass', 'german',
+    #'heart', 'kin8nm', 'madelon', 'supernova']
     for dataset in data_sets_chris:
         preprocessor_libsvm_data(dataset)
