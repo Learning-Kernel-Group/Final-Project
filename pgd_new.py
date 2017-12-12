@@ -44,8 +44,8 @@ def find_kernel(x, y, degree=1, lam=10., eta=0.2, L=1., mu0=None, mu_init=None, 
             return np.zeros(p), np.zeros(m, m)
         al_prime = eta * al + (1. - eta) * np.linalg.solve(gram, y)
         it += 1
-    print 'L = ', L, 'lam = ', lam
-    print 'iter = ', it
+    print('L = ', L, 'lam = ', lam)
+    print('iter = ', it)
     base_kernels = get_base_kernels(x, subsampling=1)
     try:
         return mu, sum_weight_kernels(base_kernels, mu) ** degree

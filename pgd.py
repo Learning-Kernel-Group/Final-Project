@@ -23,7 +23,7 @@ def get_base_kernels(features, subsampling=1):
 
 def find_kernel(x, y, degree=1, lam=10., eta=0.2, L=1., mu0=None, mu_init=None, eps=1e-3, subsampling=1):
     (m, p) = x.shape
-    m = m / subsampling + int(subsampling > 1)
+    m = int(m / subsampling + int(subsampling > 1))
     mu = np.zeros(p)
     mu_prime = mu_init
     base_kernels = get_base_kernels(x, subsampling=subsampling)
@@ -41,8 +41,8 @@ def find_kernel(x, y, degree=1, lam=10., eta=0.2, L=1., mu0=None, mu_init=None, 
         mu = mu0 + L * (mu - mu0) / (np.linalg.norm(mu - mu0) + 1e-9)
         it += 1
     mu = mu_prime
-    print 'L = ', L, 'lam = ', lam
-    print 'iter = ', it
+    print('L = ', L, 'lam = ', lam)
+    print('iter = ', it)
     base_kernels = get_base_kernels(x, subsampling=1)
     return mu, sum_weight_kernels(base_kernels, mu) ** degree
 

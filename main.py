@@ -26,9 +26,9 @@ class Problem():
         self.lam_range = lam_range
         self.eta = eta
         self.L_range = L_range
-        with open('data_python/' + self.dataset, 'rb') as _file:
+        with open('data_python/' + self.dataset, 'rb') as f:
             [self.xTrain, self.yTrain, self.xTest,
-                self.yTest] = pickle.load(_file)
+                self.yTest] = pickle.load(f)
         self.n_features = self.xTrain.shape[1]
         self.mu0 = mu0 * np.ones(self.n_features)
         self.mu_init = mu_init * np.ones(self.n_features)
@@ -40,7 +40,7 @@ class Problem():
         self.model = None
         self.mu = None
         self.make_test_kernels = kernel.make_test_kernels
-        self.cv_error = {}
+        self.cv_error = np.empty((len(L_range), len(lam_range), len(c_range)))
         self.cv_error_best = None
         self.test_error = None
 
@@ -55,21 +55,20 @@ class Problem():
                                 L=L, mu0=self.mu0, mu_init=self.mu_init, eps=self.eps, subsampling=self.subsampling)
 
     def cv(self):
-        for lam in self.lam_range:
-            for L in self.L_range:
-                _, gTrain = self.get_kernel(lam=lam, L=L)
-                for c in self.c_range:
-                    classifier = self.get_classifier(c=c)
+        for L in range(len(self.L_range)):
+            for lam in range(len(self.lam_range)):
+                _, gTrain = self.get_kernel(lam=lam_range[lam], L=L_range[L])
+                for c in range(len(self.c_range)):
+                    classifier = self.get_classifier(c=c_range[c])
                     self.cv_error[
-                        L, lam, c] = 1. - cross_val_score(classifier, gTrain, self.yTrain, cv=5).mean()
-                    print('c = ', c, ' -> ', self.cv_error[L, lam, c])
-        self.best_L, self.best_lam, self.best_c = min(
-            self.cv_error, key=self.cv_error.get)
+                        L, lam, c] = 1. - cross_val_score(classifier, gTrain, self.yTrain, cv=10).mean()
+                    print('c = ', c_range[c], ' -> ', self.cv_error[L, lam, c])
+        self.best_L, self.best_lam, self.best_c = np.unravel_index(self.cv_error.argmin(), self.cv_error.shape)
         self.cv_error_best = self.cv_error[
             self.best_L, self.best_lam, self.best_c]
-        classifier = self.get_classifier(c=self.best_c)
+        classifier = self.get_classifier(c=self.c_range[self.best_c])
         self.mu, self.gTrain = self.get_kernel(
-            lam=self.best_lam, L=self.best_L)
+            lam=self.lam_range[self.best_lam], L=self.L_range[self.best_L])
         self.model = classifier.fit(gTrain, self.yTrain)
 
     def score(self):
@@ -96,7 +95,7 @@ if __name__ == '__main__':
     data_sets = {1: 'ionosphere', 2: 'sonar', 3: 'breast-cancer', 4: 'diabetes', 5: 'fourclass', 6: 'german',
                  7: 'heart', 8: 'kin8nm', 9: 'madelon', 10: 'supernova'}
 
-    data = 8
+    data = 1
     alg = 'pgd'
     method = 'KRR'
     degree = 2
