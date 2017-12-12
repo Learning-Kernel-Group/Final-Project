@@ -239,6 +239,7 @@ if __name__ == '__main__':
     lamb_range = [1, 2, 4, 6, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     data_sets = ['breast-cancer', 'diabetes', 'fourclass',
                  'german', 'heart', 'ionosphere', 'sonar', 'kin8nm', 'supernova']
+    data_sets = ['supernova']
     processes = []
     for degree in range(1, 6):
         for data_set in data_sets:
