@@ -10,6 +10,7 @@ import pgd_l2
 import pgd_new
 import pgd
 import kernel
+import plot
 
 
 class Problem():
@@ -43,6 +44,10 @@ class Problem():
         self.cv_error = np.empty((len(L_range), len(lam_range), len(c_range)))
         self.cv_error_best = None
         self.test_error = None
+        self.gTrain_arr = []
+        self.mu_arr = []
+        self.models = []
+        self.error_array = None
 
     def get_classifier(self, c=1.):
         if self.method == 'SVC':
@@ -69,7 +74,14 @@ class Problem():
         classifier = self.get_classifier(c=self.c_range[self.best_c])
         self.mu, self.gTrain = self.get_kernel(
             lam=self.lam_range[self.best_lam], L=self.L_range[self.best_L])
-        self.model = classifier.fit(gTrain, self.yTrain)
+        self.model = classifier.fit(self.gTrain, self.yTrain)
+        for l in lam_range:
+            mu, gTrain = self.get_kernel(
+                lam=l, L=self.L_range[self.best_L])
+            model = classifier.fit(gTrain, self.yTrain)
+            self.mu_arr.append(mu)
+            self.gTrain_arr.append(gTrain)
+            self.models.append(model)
 
     def score(self):
         tmp = self.make_test_kernels(
@@ -90,6 +102,36 @@ class Problem():
         classifier.fit(self.xTrain, self.yTrain)
         print ('test error -> ', 1. - classifier.score(self.xTest, self.yTest))
 
+    def err_arr(self):
+        arr = []
+        tmp = self.make_test_kernels(
+            self.xTrain, self.xTest, subsampling=self.subsampling)
+        for i in len(self.mu_arr):
+            gTest = self.sum_weight_kernels(tmp, self.mu_arr[i]) ** self.degree
+            test_error = 1. - self.models[i].score(gTest, self.yTest)
+            arr.append(test_error)
+        return np.array(arr)
+
+
+    def plotting_error(self):
+        plt.style.use('ggplot')
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif')
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        self.error_array = self.err_arr()
+        plot.plot_as_seq(self.error_array, self.lam_range, 'Test Error', ax)
+        plot.plot_as_errorbar(self.error_arr_array,
+                              self.lam_range, 'Cross Validation Error', ax)
+        ax.set_title(r"Data Set {} with degree $d = {{{}}}$".format(
+            self.dataset, self.degree))
+        ax.set_xlabel(r"$\lambda$")
+        ax.set_ylabel(r"Error rate")
+        plt.legend()
+        plt.savefig(
+            'figure-error-{}-degree{}.png'.format(self.dataset, self.degree), dpi=250)
+        plt.close('all')
+
 if __name__ == '__main__':
 
     data_sets = {1: 'ionosphere', 2: 'sonar', 3: 'breast-cancer', 4: 'diabetes', 5: 'fourclass', 6: 'german',
@@ -97,7 +139,7 @@ if __name__ == '__main__':
 
     data = 1
     alg = 'pgd'
-    method = 'KRR'
+    method = 'SVC'
     degree = 2
     c_range = [2 ** i for i in [-8, -4, -2, 0, 2, 4, 8]]
     lam_range = [0.01, 0.1, 1., 10., 50., 100.]
@@ -118,4 +160,4 @@ if __name__ == '__main__':
     problem.mse()
     print ('mse cv -> ', problem.mse_cv_error)
     print ('mse test -> ', problem.mse_test_error)
-    problem.benchmark(method='KernelRidge()')
+    problem.benchmark(method='SVC()')
