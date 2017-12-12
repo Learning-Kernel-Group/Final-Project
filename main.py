@@ -42,12 +42,14 @@ class Problem():
         self.mu = None
         self.make_test_kernels = kernel.make_test_kernels
         self.cv_error = np.empty((len(L_range), len(lam_range), len(c_range)))
+        self.cv_error_array = np.empty((len(L_range), len(lam_range), len(c_range), 10))
         self.cv_error_best = None
         self.test_error = None
         self.gTrain_arr = []
         self.mu_arr = []
         self.models = []
         self.error_array = None
+        self.error_arr_array = None
 
     def get_classifier(self, c=1.):
         if self.method == 'SVC':
@@ -65,8 +67,11 @@ class Problem():
                 _, gTrain = self.get_kernel(lam=lam_range[lam], L=L_range[L])
                 for c in range(len(self.c_range)):
                     classifier = self.get_classifier(c=c_range[c])
-                    self.cv_error[
-                        L, lam, c] = 1. - cross_val_score(classifier, gTrain, self.yTrain, cv=10).mean()
+                    score_arr = cross_val_score(classifier, gTrain, self.yTrain, cv=10)
+                    score = score_arr.mean()
+                    error_arr = 1. - score_arr
+                    self.cv_error_array[L, lam, c] = error_arr
+                    self.cv_error[L, lam, c] = 1. - score
                     print('c = ', c_range[c], ' -> ', self.cv_error[L, lam, c])
         self.best_L, self.best_lam, self.best_c = np.unravel_index(self.cv_error.argmin(), self.cv_error.shape)
         self.cv_error_best = self.cv_error[
@@ -98,7 +103,9 @@ class Problem():
     def benchmark(self, method=None):
         print('benchmark model: ' + method)
         classifier = eval(method)
-        print('cv error -> ', 1. - cross_val_score(classifier, self.xTrain, self.yTrain, cv=5).mean())
+        score_arr = cross_val_score(classifier, self.xTrain, self.yTrain, cv=10)
+        score = score_arr.mean()
+        print('cv error -> ', 1. - score)
         classifier.fit(self.xTrain, self.yTrain)
         print ('test error -> ', 1. - classifier.score(self.xTest, self.yTest))
 
@@ -106,11 +113,14 @@ class Problem():
         arr = []
         tmp = self.make_test_kernels(
             self.xTrain, self.xTest, subsampling=self.subsampling)
-        for i in len(self.mu_arr):
+        for i in range(len(self.mu_arr)):
             gTest = self.sum_weight_kernels(tmp, self.mu_arr[i]) ** self.degree
             test_error = 1. - self.models[i].score(gTest, self.yTest)
             arr.append(test_error)
         return np.array(arr)
+
+    def err_arr_arr(self):
+        return self.cv_error_array[self.best_L, :, self.best_c]
 
 
     def plotting_error(self):
@@ -120,6 +130,7 @@ class Problem():
         fig = plt.figure()
         ax = fig.add_subplot(111)
         self.error_array = self.err_arr()
+        self.error_arr_array = self.err_arr_arr()
         plot.plot_as_seq(self.error_array, self.lam_range, 'Test Error', ax)
         plot.plot_as_errorbar(self.error_arr_array,
                               self.lam_range, 'Cross Validation Error', ax)
@@ -160,4 +171,5 @@ if __name__ == '__main__':
     problem.mse()
     print ('mse cv -> ', problem.mse_cv_error)
     print ('mse test -> ', problem.mse_test_error)
+    problem.plotting_error()
     problem.benchmark(method='SVC()')
